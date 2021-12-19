@@ -27,6 +27,8 @@ fn get_type<E: serde::de::Error>(map: &mut HashMap<String, Value>) -> Result<Str
     if let Some(v) = map.remove("type") {
         if let Value::String(v) = v {
             Ok(v)
+        } else if let Value::Null = v {
+            Ok("null".to_string())
         } else {
             Err(serde::de::Error::custom("type must be a string"))
         }

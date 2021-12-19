@@ -7,6 +7,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
     vec![
         (r#"null"#, Null),
         (r#"{"type": "null"}"#, Null),
+        (r#"{"type": null}"#, Null),
         (r#""null""#, Null),
         (r#""boolean""#, Boolean),
         (r#"{"type": "boolean"}"#, Boolean),
