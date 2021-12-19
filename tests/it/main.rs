@@ -5,6 +5,7 @@ use avro_schema::{BytesLogical, Field, LongLogical, Schema};
 fn cases() -> Vec<(&'static str, Schema)> {
     use Schema::*;
     vec![
+        (r#"null"#, Null),
         (r#"{"type": "null"}"#, Null),
         (r#""null""#, Null),
         (r#""boolean""#, Boolean),
@@ -131,9 +132,7 @@ fn test_deserialize() -> Result<()> {
 #[test]
 fn test_round_trip() -> Result<()> {
     for (_, expected) in cases() {
-        println!("{:?}", expected);
         let serialized = serde_json::to_string(&expected)?;
-        println!("{}", serialized);
         let v: avro_schema::Schema = serde_json::from_str(&serialized)?;
         assert_eq!(expected, v);
     }

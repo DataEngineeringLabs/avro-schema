@@ -204,7 +204,21 @@ impl<'de> Visitor<'de> for SchemaVisitor {
 
     // Format a message stating what data this Visitor expects to receive.
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("a string, array or map describing an Avro schema")
+        formatter.write_str("a null, string, array or map describing an Avro schema")
+    }
+
+    fn visit_some<D>(self, deserializer: D) -> Result<Self::Value, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_any(SchemaVisitor {})
+    }
+
+    fn visit_none<E>(self) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        Ok(Schema::Null)
     }
 
     fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
@@ -304,7 +318,7 @@ impl<'de> Deserialize<'de> for Schema {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_any(SchemaVisitor {})
+        deserializer.deserialize_option(SchemaVisitor {})
     }
 }
 
