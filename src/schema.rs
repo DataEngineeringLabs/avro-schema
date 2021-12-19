@@ -1,3 +1,5 @@
+/// An Avro Schema. It describes all _physical_ and _logical_ types.
+/// See [the spec](https://avro.apache.org/docs/current/spec.html) for details.
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub enum Schema {
     Null,
@@ -16,6 +18,7 @@ pub enum Schema {
     Fixed(Fixed),
 }
 
+/// Order of a [`Field`].
 #[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub enum Order {
     Ascending,
@@ -23,6 +26,8 @@ pub enum Order {
     Ignore,
 }
 
+/// An Avro field.
+/// See [the spec](https://avro.apache.org/docs/current/spec.html) for details.
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Field {
     pub name: String,
@@ -46,6 +51,7 @@ impl Field {
     }
 }
 
+/// Struct to hold data from a [`Schema::Record`].
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Record {
     pub name: String,
@@ -67,6 +73,7 @@ impl Record {
     }
 }
 
+/// Struct to hold data from a [`Schema::Fixed`].
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Fixed {
     pub name: String,
@@ -90,6 +97,7 @@ impl Fixed {
     }
 }
 
+/// Struct to hold data from a [`Schema::Enum`].
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct Enum {
     pub name: String,
@@ -101,6 +109,7 @@ pub struct Enum {
 }
 
 impl Enum {
+    /// Returns a minimal [`Enum`].
     pub fn new<I: Into<String>>(name: I, symbols: Vec<String>) -> Self {
         Self {
             name: name.into(),
@@ -131,12 +140,14 @@ impl From<Fixed> for Schema {
     }
 }
 
+/// Enum of all logical types of [`Schema::Int`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum IntLogical {
     Date,
     Time,
 }
 
+/// Enum of all logical types of [`Schema::Long`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LongLogical {
     Time,
@@ -146,11 +157,13 @@ pub enum LongLogical {
     LocalTimestampMicros,
 }
 
+/// Enum of all logical types of [`Schema::String`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum StringLogical {
     Uuid,
 }
 
+/// Enum of all logical types of [`Schema::Fixed`]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FixedLogical {
     Decimal(usize, usize),
