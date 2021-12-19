@@ -13,7 +13,7 @@ fn to_primitive(v: &str) -> Option<Schema> {
     Some(match v {
         "null" => Null,
         "boolean" => Boolean,
-        "bytes" => Bytes,
+        "bytes" => Bytes(None),
         "string" => String(None),
         "int" => Int(None),
         "long" => Long(None),
@@ -159,8 +159,8 @@ fn to_fixed<E: serde::de::Error>(data: &mut HashMap<String, Value>) -> Result<Sc
     let logical = match logical.as_ref() {
         "decimal" => {
             let precision = remove_usize(data, "precision")?;
-            let scale = remove_usize(data, "scale")?;
-            precision.and_then(|p| scale.map(|s| FixedLogical::Decimal(p, s)))
+            let scale = remove_usize(data, "scale")?.unwrap_or_default();
+            precision.map(|p| FixedLogical::Decimal(p, scale))
         }
         "duration" => Some(FixedLogical::Duration),
         _ => None,
@@ -269,6 +269,17 @@ impl<'de> Visitor<'de> for SchemaVisitor {
                         }
                         "local-timestamp-micros" => {
                             Schema::Long(Some(LongLogical::LocalTimestampMicros))
+                        }
+                        _ => schema,
+                    }
+                }
+                "bytes" => {
+                    let logical = remove_string(&mut map, "logicalType")?.unwrap_or_default();
+                    match logical.as_ref() {
+                        "decimal" => {
+                            let precision = remove_usize(&mut map, "precision")?;
+                            let scale = remove_usize(&mut map, "scale")?.unwrap_or_default();
+                            Schema::Bytes(precision.map(|p| BytesLogical::Decimal(p, scale)))
                         }
                         _ => schema,
                     }

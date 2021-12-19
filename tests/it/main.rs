@@ -1,6 +1,6 @@
 use serde_json::Result;
 
-use avro_schema::{Field, LongLogical, Schema};
+use avro_schema::{BytesLogical, Field, LongLogical, Schema};
 
 fn cases() -> Vec<(&'static str, Schema)> {
     use Schema::*;
@@ -11,8 +11,12 @@ fn cases() -> Vec<(&'static str, Schema)> {
         (r#"{"type": "boolean"}"#, Boolean),
         (r#""string""#, String(None)),
         (r#"{"type": "string"}"#, String(None)),
-        (r#""bytes""#, Bytes),
-        (r#"{"type": "bytes"}"#, Bytes),
+        (r#""bytes""#, Bytes(None)),
+        (r#"{"type": "bytes"}"#, Bytes(None)),
+        (
+            r#"{"type": "bytes", "logicalType": "decimal", "precision": 10}"#,
+            Bytes(Some(BytesLogical::Decimal(10, 0))),
+        ),
         (r#""int""#, Int(None)),
         (r#"{"type": "int"}"#, Int(None)),
         (r#""long""#, Long(None)),
@@ -108,7 +112,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
                         "serverHash",
                         Union(vec![Null, avro_schema::Fixed::new("MD5", 16).into()]),
                     ),
-                    Field::new("meta", Union(vec![Null, Map(Box::new(Bytes))])),
+                    Field::new("meta", Union(vec![Null, Map(Box::new(Bytes(None)))])),
                 ],
             }),
         ),

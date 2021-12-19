@@ -8,7 +8,7 @@ pub enum Schema {
     Long(Option<LongLogical>),
     Float,
     Double,
-    Bytes,
+    Bytes(Option<BytesLogical>),
     String(Option<StringLogical>),
     Record(Record),
     Enum(Enum),
@@ -168,4 +168,10 @@ pub enum StringLogical {
 pub enum FixedLogical {
     Decimal(usize, usize),
     Duration,
+}
+
+/// Enum of all logical types of [`Schema::Bytes`]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum BytesLogical {
+    Decimal(usize, usize),
 }

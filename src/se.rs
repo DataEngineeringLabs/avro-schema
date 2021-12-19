@@ -42,7 +42,21 @@ impl Serialize for Schema {
             },
             Schema::Float => serializer.serialize_str("float"),
             Schema::Double => serializer.serialize_str("double"),
-            Schema::Bytes => serializer.serialize_str("bytes"),
+            Schema::Bytes(logical) => match logical {
+                None => serializer.serialize_str("bytes"),
+                Some(logical) => match logical {
+                    BytesLogical::Decimal(precision, scale) => {
+                        let mut map = serializer.serialize_map(Some(4))?;
+                        map.serialize_entry("type", "bytes")?;
+                        map.serialize_entry("logicalType", "decimal")?;
+                        map.serialize_entry("precision", precision)?;
+                        if *scale > 0 {
+                            map.serialize_entry("scale", scale)?;
+                        }
+                        map.end()
+                    }
+                },
+            },
             Schema::String(logical) => match logical {
                 None => serializer.serialize_str("string"),
                 Some(logical) => match logical {
