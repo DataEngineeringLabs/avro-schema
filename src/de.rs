@@ -323,7 +323,7 @@ impl<'de> Visitor<'de> for FieldVisitor {
                 .ok_or_else(|| serde::de::Error::custom("name is required in enum"))?,
             doc: remove_string(&mut map, "doc")?,
             schema: to_schema(&mut map, "type")?
-                .ok_or_else(|| serde::de::Error::custom("schema is required in Field"))?,
+                .ok_or_else(|| serde::de::Error::custom("type is required in Field"))?,
             default: to_schema(&mut map, "default")?,
             order: to_order(&mut map, "order")?,
             aliases: remove_vec_string(&mut map, "aliases")?,
