@@ -1,5 +1,23 @@
 mod de;
 
+#[derive(Debug, Clone, PartialEq, Hash)]
+pub enum Schema {
+    Null,
+    Boolean,
+    Int(Option<IntLogical>),
+    Long(Option<LongLogical>),
+    Float,
+    Double,
+    Bytes,
+    String(Option<StringLogical>),
+    Record(Record),
+    Enum(Enum),
+    Array(Box<Schema>),
+    Map(Box<Schema>),
+    Union(Vec<Schema>),
+    Fixed(Fixed),
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Hash)]
 pub enum Order {
     Ascending,
@@ -58,6 +76,7 @@ pub struct Fixed {
     pub doc: Option<String>,
     pub aliases: Vec<String>,
     pub size: usize,
+    pub logical: Option<FixedLogical>,
 }
 
 impl Fixed {
@@ -68,6 +87,7 @@ impl Fixed {
             doc: None,
             size,
             aliases: vec![],
+            logical: None,
         }
     }
 }
@@ -95,24 +115,6 @@ impl Enum {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Hash)]
-pub enum Schema {
-    Null,
-    Boolean,
-    Int,
-    Long,
-    Float,
-    Double,
-    Bytes,
-    String,
-    Record(Record),
-    Enum(Enum),
-    Array(Box<Schema>),
-    Map(Box<Schema>),
-    Union(Vec<Schema>),
-    Fixed(Fixed),
-}
-
 impl From<Enum> for Schema {
     fn from(enum_: Enum) -> Self {
         Schema::Enum(enum_)
@@ -129,4 +131,30 @@ impl From<Fixed> for Schema {
     fn from(fixed: Fixed) -> Self {
         Schema::Fixed(fixed)
     }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum IntLogical {
+    Date,
+    Time,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum LongLogical {
+    Time,
+    TimestampMillis,
+    TimestampMicros,
+    LocalTimestampMillis,
+    LocalTimestampMicros,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum StringLogical {
+    Uuid,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FixedLogical {
+    Decimal(usize, usize),
+    Duration,
 }

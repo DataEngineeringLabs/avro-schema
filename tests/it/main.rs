@@ -1,6 +1,6 @@
 use serde_json::Result;
 
-use avro_schema::{Field, Schema};
+use avro_schema::{Field, LongLogical, Schema};
 
 fn cases() -> Vec<(&'static str, Schema)> {
     use Schema::*;
@@ -9,14 +9,18 @@ fn cases() -> Vec<(&'static str, Schema)> {
         (r#""null""#, Null),
         (r#""boolean""#, Boolean),
         (r#"{"type": "boolean"}"#, Boolean),
-        (r#""string""#, String),
-        (r#"{"type": "string"}"#, String),
+        (r#""string""#, String(None)),
+        (r#"{"type": "string"}"#, String(None)),
         (r#""bytes""#, Bytes),
         (r#"{"type": "bytes"}"#, Bytes),
-        (r#""int""#, Int),
-        (r#"{"type": "int"}"#, Int),
-        (r#""long""#, Long),
-        (r#"{"type": "long"}"#, Long),
+        (r#""int""#, Int(None)),
+        (r#"{"type": "int"}"#, Int(None)),
+        (r#""long""#, Long(None)),
+        (r#"{"type": "long"}"#, Long(None)),
+        (
+            r#"{"type": "long", "logicalType": "timestamp-millis"}"#,
+            Long(Some(LongLogical::TimestampMillis)),
+        ),
         (r#""float""#, Float),
         (r#"{"type": "float"}"#, Float),
         (r#""double""#, Double),
@@ -28,12 +32,15 @@ fn cases() -> Vec<(&'static str, Schema)> {
                 vec!["A".to_string(), "B".to_string()],
             )),
         ),
-        (r#"["null", "string"]"#, Union(vec![Null, String])),
+        (r#"["null", "string"]"#, Union(vec![Null, String(None)])),
         (
             r#"[{"type": "null"}, {"type": "string"}]"#,
-            Union(vec![Null, String]),
+            Union(vec![Null, String(None)]),
         ),
-        (r#"{"type": "map", "values": "long"}"#, Map(Box::new(Long))),
+        (
+            r#"{"type": "map", "values": "long"}"#,
+            Map(Box::new(Long(None))),
+        ),
         (
             r#"{
                 "type": "map",
@@ -46,7 +53,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
         ),
         (
             r#"{"type": "array", "items": "long"}"#,
-            Array(Box::new(Long)),
+            Array(Box::new(Long(None))),
         ),
         (
             r#"{
@@ -96,7 +103,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
                         )
                         .into(),
                     ),
-                    Field::new("serverProtocol", Union(vec![Null, String])),
+                    Field::new("serverProtocol", Union(vec![Null, String(None)])),
                     Field::new(
                         "serverHash",
                         Union(vec![Null, avro_schema::Fixed::new("MD5", 16).into()]),

@@ -13,10 +13,10 @@ fn to_primitive(v: &str) -> Option<Schema> {
     Some(match v {
         "null" => Null,
         "boolean" => Boolean,
-        "string" => String,
         "bytes" => Bytes,
-        "int" => Int,
-        "long" => Long,
+        "string" => String(None),
+        "int" => Int(None),
+        "long" => Long(None),
         "float" => Float,
         "double" => Double,
         _ => return None,
@@ -54,6 +54,15 @@ fn remove_string<E: serde::de::Error>(
         Some(s) => as_string(s, key).map(Some),
         None => Ok(None),
     }
+}
+
+fn remove_usize<E: serde::de::Error>(
+    data: &mut HashMap<String, Value>,
+    key: &str,
+) -> Result<Option<usize>, E> {
+    data.remove(key)
+        .map(|x| serde_json::from_value::<usize>(x).map_err(serde::de::Error::custom))
+        .transpose()
 }
 
 fn remove_vec_string<E: serde::de::Error>(
@@ -143,17 +152,28 @@ fn to_record<E: serde::de::Error>(data: &mut HashMap<String, Value>) -> Result<S
 }
 
 fn to_fixed<E: serde::de::Error>(data: &mut HashMap<String, Value>) -> Result<Schema, E> {
-    let size = data
-        .remove("size")
-        .ok_or_else(|| serde::de::Error::custom("name is required in enum"))
-        .and_then(|x| serde_json::from_value::<usize>(x).map_err(serde::de::Error::custom))?;
+    let size = remove_usize(data, "size")?
+        .ok_or_else(|| serde::de::Error::custom("size is required in fixed"))?;
+
+    let logical = remove_string(data, "logicalType")?.unwrap_or_default();
+    let logical = match logical.as_ref() {
+        "decimal" => {
+            let precision = remove_usize(data, "precision")?;
+            let scale = remove_usize(data, "scale")?;
+            precision.and_then(|p| scale.map(|s| FixedLogical::Decimal(p, s)))
+        }
+        "duration" => Some(FixedLogical::Duration),
+        _ => None,
+    };
+
     Ok(Schema::Fixed(Fixed {
         name: remove_string(data, "name")?
-            .ok_or_else(|| serde::de::Error::custom("name is required in enum"))?,
+            .ok_or_else(|| serde::de::Error::custom("name is required in fixed"))?,
         namespace: remove_string(data, "namespace")?,
         aliases: remove_vec_string(data, "aliases")?,
         doc: remove_string(data, "doc")?,
         size,
+        logical,
     }))
 }
 
@@ -222,7 +242,39 @@ impl<'de> Visitor<'de> for SchemaVisitor {
         let (schema, type_) = get_type(&mut map).map(|x| (to_primitive(&x), x))?;
 
         if let Some(schema) = schema {
-            Ok(schema)
+            Ok(match type_.as_ref() {
+                "string" => {
+                    let logical = remove_string(&mut map, "logicalType")?.unwrap_or_default();
+                    match logical.as_ref() {
+                        "uuid" => Schema::String(Some(StringLogical::Uuid)),
+                        _ => schema,
+                    }
+                }
+                "int" => {
+                    let logical = remove_string(&mut map, "logicalType")?.unwrap_or_default();
+                    match logical.as_ref() {
+                        "date" => Schema::Int(Some(IntLogical::Date)),
+                        "time-millis" => Schema::Int(Some(IntLogical::Time)),
+                        _ => schema,
+                    }
+                }
+                "long" => {
+                    let logical = remove_string(&mut map, "logicalType")?.unwrap_or_default();
+                    match logical.as_ref() {
+                        "time-micros" => Schema::Long(Some(LongLogical::Time)),
+                        "timestamp-millis" => Schema::Long(Some(LongLogical::TimestampMillis)),
+                        "timestamp-micros" => Schema::Long(Some(LongLogical::TimestampMicros)),
+                        "local-timestamp-millis" => {
+                            Schema::Long(Some(LongLogical::LocalTimestampMillis))
+                        }
+                        "local-timestamp-micros" => {
+                            Schema::Long(Some(LongLogical::LocalTimestampMicros))
+                        }
+                        _ => schema,
+                    }
+                }
+                _ => schema,
+            })
         } else {
             match type_.as_ref() {
                 "enum" => to_enum(&mut map),
