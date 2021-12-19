@@ -1,6 +1,6 @@
 use serde_json::Result;
 
-use avro_schema::{BytesLogical, Field, LongLogical, Schema};
+use avro_schema::*;
 
 fn cases() -> Vec<(&'static str, Schema)> {
     use Schema::*;
@@ -90,8 +90,17 @@ fn cases() -> Vec<(&'static str, Schema)> {
                         "type":["null", {"name":"MD5", "size":16, "type":"fixed"}]
                     },
                     {
-                        "name":"meta",
-                        "type":["null", {"type":"map", "values":"bytes"}]
+                        "name": "meta",
+                        "type": ["null", {"type": "map", "values":"bytes"}]
+                    },
+                    {
+                        "name": "duration",
+                        "type": {
+                            "logicalType": "duration",
+                            "name": "duration",
+                            "type": "fixed",
+                            "size": 12
+                        }
                     }
                 ]
             }"#,
@@ -115,6 +124,18 @@ fn cases() -> Vec<(&'static str, Schema)> {
                         Union(vec![Null, avro_schema::Fixed::new("MD5", 16).into()]),
                     ),
                     Field::new("meta", Union(vec![Null, Map(Box::new(Bytes(None)))])),
+                    Field::new(
+                        "duration",
+                        avro_schema::Fixed {
+                            name: "duration".to_string(),
+                            size: 12,
+                            namespace: None,
+                            doc: None,
+                            aliases: vec![],
+                            logical: Some(FixedLogical::Duration),
+                        }
+                        .into(),
+                    ),
                 ],
             }),
         ),
