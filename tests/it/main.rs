@@ -1,6 +1,6 @@
 use serde_json::Result;
 
-use avro_schema::Schema;
+use avro_schema::{Field, Schema};
 
 fn cases() -> Vec<(&'static str, Schema)> {
     use Schema::*;
@@ -23,19 +23,87 @@ fn cases() -> Vec<(&'static str, Schema)> {
         (r#"{"type": "double"}"#, Double),
         (
             r#"{"type": "enum", "name": "Test", "symbols": ["A", "B"]}"#,
-            Enum {
-                name: "Test".to_string(),
-                namespace: None,
-                doc: None,
-                aliases: vec![],
-                symbols: vec!["A".to_string(), "B".to_string()],
-                default: None,
-            },
+            Enum(avro_schema::Enum::new(
+                "Test",
+                vec!["A".to_string(), "B".to_string()],
+            )),
         ),
         (r#"["null", "string"]"#, Union(vec![Null, String])),
         (
             r#"[{"type": "null"}, {"type": "string"}]"#,
             Union(vec![Null, String]),
+        ),
+        (r#"{"type": "map", "values": "long"}"#, Map(Box::new(Long))),
+        (
+            r#"{
+                "type": "map",
+                "values": {"type": "enum", "name": "Test", "symbols": ["A", "B"]}
+            }"#,
+            Map(Box::new(Enum(avro_schema::Enum::new(
+                "Test",
+                vec!["A".to_string(), "B".to_string()],
+            )))),
+        ),
+        (
+            r#"{"type": "array", "items": "long"}"#,
+            Array(Box::new(Long)),
+        ),
+        (
+            r#"{
+                    "type": "array",
+                    "items": {"type": "enum", "name": "Test", "symbols": ["A", "B"]}
+                }"#,
+            Array(Box::new(
+                avro_schema::Enum::new("Test", vec!["A".to_string(), "B".to_string()]).into(),
+            )),
+        ),
+        (
+            r#"{
+                "type":"record",
+                "name":"HandshakeResponse",
+                "namespace":"org.apache.avro.ipc",
+                "fields":[
+                    {
+                        "name":"match",
+                        "type":{
+                            "type":"enum",
+                            "name":"HandshakeMatch",
+                            "symbols":["BOTH", "CLIENT", "NONE"]
+                        }
+                    },
+                    {"name":"serverProtocol", "type":["null", "string"]},
+                    {
+                        "name":"serverHash",
+                        "type":["null", {"name":"MD5", "size":16, "type":"fixed"}]
+                    },
+                    {
+                        "name":"meta",
+                        "type":["null", {"type":"map", "values":"bytes"}]
+                    }
+                ]
+            }"#,
+            Record(avro_schema::Record {
+                name: "HandshakeResponse".to_string(),
+                namespace: Some("org.apache.avro.ipc".to_string()),
+                doc: None,
+                aliases: vec![],
+                fields: vec![
+                    Field::new(
+                        "match",
+                        avro_schema::Enum::new(
+                            "HandshakeMatch",
+                            vec!["BOTH".to_string(), "CLIENT".to_string(), "NONE".to_string()],
+                        )
+                        .into(),
+                    ),
+                    Field::new("serverProtocol", Union(vec![Null, String])),
+                    Field::new(
+                        "serverHash",
+                        Union(vec![Null, avro_schema::Fixed::new("MD5", 16).into()]),
+                    ),
+                    Field::new("meta", Union(vec![Null, Map(Box::new(Bytes))])),
+                ],
+            }),
         ),
     ]
 }
