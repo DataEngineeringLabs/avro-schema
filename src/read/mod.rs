@@ -1,11 +1,12 @@
 mod block;
-mod decompress;
-mod utils;
+mod decode;
+pub(crate) mod decompress;
 
 use std::io::Read;
 
 use crate::error::Error;
 use crate::file::FileMetadata;
+use crate::schema::Schema;
 
 pub use fallible_streaming_iterator;
 
@@ -67,22 +68,29 @@ macro_rules! read_metadata_macro {
             return Err(Error::OutOfSpec);
         }
 
-        let header = utils::read_header($reader)$($_await)*?;
+        let header = decode::read_header($reader)$($_await)*?;
 
         let (schema, compression) = deserialize_header(header)?;
 
-        let marker = utils::read_file_marker($reader)$($_await)*?;
+        let marker = decode::read_file_marker($reader)$($_await)*?;
+
+        let record = if let Schema::Record(record) = schema {
+            record
+        } else {
+            return Err(Error::OutOfSpec)
+        };
 
         Ok(FileMetadata {
-            schema,
+            record,
             compression,
             marker,
         })
     }};
 }
 
+#[allow(unused_imports)]
 pub(crate) use {
-    avro_decode, read_header, read_metadata_macro, utils::deserialize_header, utils::DecodeError,
+    avro_decode, decode::deserialize_header, decode::DecodeError, read_header, read_metadata_macro,
 };
 
 /// Reads the metadata from `reader` into [`FileMetadata`].
@@ -92,4 +100,4 @@ pub fn read_metadata<R: Read>(reader: &mut R) -> Result<FileMetadata, Error> {
     read_metadata_macro!(reader)
 }
 
-pub use decompress::block_iterator;
+pub use decompress::{block_iterator, BlockStreamingIterator};

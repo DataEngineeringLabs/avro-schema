@@ -5,17 +5,17 @@ use fallible_streaming_iterator::FallibleStreamingIterator;
 
 use crate::{error::Error, file::CompressedBlock};
 
-use super::utils;
+use super::decode;
 
 fn read_size<R: Read>(reader: &mut R) -> Result<(usize, usize), Error> {
-    let rows = match utils::zigzag_i64(reader) {
+    let rows = match decode::internal_zigzag_i64(reader) {
         Ok(a) => a,
         Err(error) => match error {
-            utils::DecodeError::EndOfFile => return Ok((0, 0)),
-            utils::DecodeError::OutOfSpec => return Err(Error::OutOfSpec),
+            decode::DecodeError::EndOfFile => return Ok((0, 0)),
+            decode::DecodeError::OutOfSpec => return Err(Error::OutOfSpec),
         },
     };
-    let bytes = utils::zigzag_i64(reader)?;
+    let bytes = decode::zigzag_i64(reader)?;
     Ok((rows as usize, bytes as usize))
 }
 

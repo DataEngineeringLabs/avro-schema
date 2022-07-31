@@ -1,10 +1,9 @@
-use crate::schema::Schema;
+use crate::schema::Record;
 
 /// Avro file's Metadata
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct FileMetadata {
-    /// Its schema, whose root is a [`Schema::Record`].
-    pub schema: Schema,
+    pub record: Record,
     pub compression: Option<Compression>,
     pub marker: [u8; 16],
 }

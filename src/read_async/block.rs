@@ -8,7 +8,7 @@ use crate::error::Error;
 use crate::file::CompressedBlock;
 use crate::read::DecodeError;
 
-use super::utils::zigzag_i64;
+use super::decode::zigzag_i64;
 
 async fn read_size<R: AsyncRead + Unpin + Send>(reader: &mut R) -> Result<(usize, usize), Error> {
     let rows = match zigzag_i64(reader).await {
@@ -59,12 +59,12 @@ async fn read_block<R: AsyncRead + Unpin + Send>(
 /// Returns a fallible [`Stream`] of Avro blocks bound to `reader`
 pub async fn block_stream<R: AsyncRead + Unpin + Send>(
     reader: &mut R,
-    file_marker: [u8; 16],
+    marker: [u8; 16],
 ) -> impl Stream<Item = Result<CompressedBlock, Error>> + '_ {
     try_stream! {
         loop {
             let mut block = CompressedBlock::new(0, vec![]);
-            read_block(reader, &mut block, file_marker).await?;
+            read_block(reader, &mut block, marker).await?;
             if block.number_of_rows == 0 {
                 break
             }

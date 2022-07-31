@@ -1,8 +1,14 @@
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
     OutOfSpec,
-    /// When the file is compressed but the feature flag "compression" is not active.
+    /// When reading or writing with compression but the feature flag "compression" is not active.
     RequiresCompression,
+}
+
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
 }
 
 impl From<std::io::Error> for Error {

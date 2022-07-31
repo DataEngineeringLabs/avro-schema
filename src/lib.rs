@@ -3,8 +3,14 @@
 
 pub mod error;
 pub mod file;
-pub mod read;
-#[cfg(feature = "compression")]
-#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
-pub mod read_async;
 pub mod schema;
+
+pub mod read;
+#[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+pub mod read_async;
+
+pub mod write;
+#[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+pub mod write_async;

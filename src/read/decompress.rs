@@ -13,9 +13,9 @@ use super::block::CompressedBlockStreamingIterator;
 #[cfg(feature = "compression")]
 const CRC_TABLE: crc::Crc<u32> = crc::Crc::<u32>::new(&crc::CRC_32_ISO_HDLC);
 
-/// Decompresses an Avro block.
+/// Decompresses a [`CompressedBlock`] into [`Block`]
 /// Returns whether the buffers where swapped.
-fn decompress_block(
+pub fn decompress_block(
     block: &mut CompressedBlock,
     decompressed: &mut Block,
     compression: Option<Compression>,
@@ -63,10 +63,10 @@ fn decompress_block(
     }
 }
 
-/// [`FallibleStreamingIterator`] of decompressed Avro blocks
+/// [`FallibleStreamingIterator`] of decompressed [`Block`]
 pub struct BlockStreamingIterator<R: Read> {
     blocks: CompressedBlockStreamingIterator<R>,
-    codec: Option<Compression>,
+    compression: Option<Compression>,
     buf: Block,
     was_swapped: bool,
 }
@@ -74,18 +74,23 @@ pub struct BlockStreamingIterator<R: Read> {
 /// Returns a [`FallibleStreamingIterator`] of [`Block`].
 pub fn block_iterator<R: Read>(
     reader: R,
-    codec: Option<Compression>,
+    compression: Option<Compression>,
     marker: [u8; 16],
 ) -> BlockStreamingIterator<R> {
-    BlockStreamingIterator::<R> {
-        blocks: CompressedBlockStreamingIterator::new(reader, marker, vec![]),
-        codec,
-        buf: Block::new(0, vec![]),
-        was_swapped: false,
-    }
+    BlockStreamingIterator::<R>::new(reader, compression, marker)
 }
 
 impl<R: Read> BlockStreamingIterator<R> {
+    /// Returns a new [`BlockStreamingIterator`].
+    pub fn new(reader: R, compression: Option<Compression>, marker: [u8; 16]) -> Self {
+        Self {
+            blocks: CompressedBlockStreamingIterator::new(reader, marker, vec![]),
+            compression,
+            buf: Block::new(0, vec![]),
+            was_swapped: false,
+        }
+    }
+
     /// Deconstructs itself into its internal reader
     #[inline]
     pub fn into_inner(self) -> R {
@@ -103,7 +108,7 @@ impl<R: Read> FallibleStreamingIterator for BlockStreamingIterator<R> {
             std::mem::swap(&mut self.blocks.buffer().data, &mut self.buf.data);
         }
         self.blocks.advance()?;
-        self.was_swapped = decompress_block(self.blocks.buffer(), &mut self.buf, self.codec)?;
+        self.was_swapped = decompress_block(self.blocks.buffer(), &mut self.buf, self.compression)?;
         Ok(())
     }
 

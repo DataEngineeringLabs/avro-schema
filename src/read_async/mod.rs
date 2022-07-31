@@ -6,11 +6,12 @@ use crate::error::Error;
 use crate::file::FileMetadata;
 
 use crate::read::read_metadata_macro;
+use crate::schema::Schema;
 
 mod block;
-mod utils;
+mod decode;
 use crate::read::deserialize_header;
-use utils::*;
+use decode::*;
 
 /// Reads the avro metadata from `reader` into a [`Schema`], [`Compression`] and magic marker.
 pub async fn read_metadata<R: AsyncRead + Unpin + Send>(
@@ -27,4 +28,5 @@ async fn _read_binary<R: AsyncRead + Unpin + Send>(reader: &mut R) -> Result<Vec
     Ok(buf)
 }
 
+pub use super::read::decompress::decompress_block;
 pub use block::block_stream;
