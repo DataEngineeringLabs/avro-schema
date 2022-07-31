@@ -4,6 +4,8 @@ This crate contains the complete implementation of the schemas of
 the [Avro specification](https://avro.apache.org/docs/current/spec.html) in
 native Rust.
 
+See API documentation with examples on how to read and write.
+
 ## License
 
 Licensed under either of
