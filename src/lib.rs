@@ -1,7 +1,10 @@
 #![doc = include_str!("lib.md")]
 #![forbid(unsafe_code)]
 
-mod de;
-mod schema;
-mod se;
-pub use schema::*;
+pub mod error;
+pub mod file;
+pub mod read;
+#[cfg(feature = "compression")]
+#[cfg_attr(docsrs, doc(cfg(feature = "compression")))]
+pub mod read_async;
+pub mod schema;

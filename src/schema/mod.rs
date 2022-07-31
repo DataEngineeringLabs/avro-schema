@@ -1,3 +1,6 @@
+mod de;
+mod se;
+
 /// An Avro Schema. It describes all _physical_ and _logical_ types.
 /// See [the spec](https://avro.apache.org/docs/current/spec.html) for details.
 #[derive(Debug, Clone, PartialEq, Hash)]
