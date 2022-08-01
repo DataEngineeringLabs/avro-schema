@@ -1,8 +1,13 @@
 # Avro-schema - Avro schema in Rust
 
+[![test](https://github.com/DataEngineeringLabs/avro-schema/actions/workflows/test.yml/badge.svg)](https://github.com/DataEngineeringLabs/avro-schema/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/DataEngineeringLabs/avro-schema/branch/main/graph/badge.svg)](https://codecov.io/gh/DataEngineeringLabs/avro-schema)
+
 This crate contains the complete implementation of the schemas of
 the [Avro specification](https://avro.apache.org/docs/current/spec.html) in
 native Rust.
+
+See API documentation with examples on how to read and write.
 
 ## License
 

@@ -1,33 +1,20 @@
-Welcome to avro-schema's documentation. Thanks for checking it out!
-
-This is a library containing declarations of the
-[Avro specification](https://avro.apache.org/docs/current/spec.html)
-in Rust's struct and enums together with serialization and deserialization
-implementations based on `serde_json`.
-
-It also contains basic functionality to read and deserialize Avro's file's metadata
-and blocks.
-
-Example of reading a file:
-
-```rust
 use std::convert::TryInto;
-use std::fs::File;
-use std::io::BufReader;
 
 use avro_schema::error::Error;
+use avro_schema::file::{Block, Compression};
 use avro_schema::read::fallible_streaming_iterator::FallibleStreamingIterator;
+use avro_schema::schema::{Field, Record, Schema};
 
-fn read_avro(path: &str) -> Result<(), Error> {
-    let file = &mut BufReader::new(File::open(path)?);
+fn read_avro(mut data: &[u8]) -> Result<Vec<f32>, Error> {
+    let metadata = avro_schema::read::read_metadata(&mut data)?;
 
-    let metadata = avro_schema::read::read_metadata(file)?;
+    let mut blocks = avro_schema::read::BlockStreamingIterator::new(
+        &mut data,
+        metadata.compression,
+        metadata.marker,
+    );
 
-    println!("{:#?}", metadata);
-
-    let mut blocks =
-        avro_schema::read::BlockStreamingIterator::new(file, metadata.compression, metadata.marker);
-
+    let mut values = vec![];
     while let Some(block) = blocks.next()? {
         let _fields = &metadata.record.fields;
         let length = block.number_of_rows;
@@ -38,34 +25,25 @@ fn read_avro(path: &str) -> Result<(), Error> {
         for _ in 0..length {
             let (item, remaining) = block.split_at(4);
             block = remaining;
-            let _value = f32::from_le_bytes(item.try_into().unwrap());
+            let value = f32::from_le_bytes(item.try_into().unwrap());
+            values.push(value)
             // if there were more fields, we would need to consume (or skip) the remaining
             // here. You can use `avro_schema::read::decode::zigzag_i64` for integers :D
         }
     }
 
-    Ok(())
+    Ok(values)
 }
-```
 
-Example of writing a file
-
-```rust
-use std::fs::File;
-
-use avro_schema::error::Error;
-use avro_schema::file::Block;
-use avro_schema::schema::{Field, Record, Schema};
-
-fn write_avro(compression: Option<avro_schema::file::Compression>) -> Result<(), Error> {
-    let mut file = File::create("test.avro")?;
+fn write_avro(
+    compression: Option<avro_schema::file::Compression>,
+    array: &[f32],
+) -> Result<Vec<u8>, Error> {
+    let mut file = vec![];
 
     let record = Record::new("", vec![Field::new("value", Schema::Float)]);
 
     avro_schema::write::write_metadata(&mut file, record, compression)?;
-
-    // given some data:
-    let array = vec![1.0f32, 2.0];
 
     // we need to create a `Block`
     let mut data: Vec<u8> = vec![];
@@ -82,6 +60,32 @@ fn write_avro(compression: Option<avro_schema::file::Compression>) -> Result<(),
     // and finally write it to the file
     avro_schema::write::write_block(&mut file, &compressed_block)?;
 
+    Ok(file)
+}
+
+#[test]
+fn round_trip() -> Result<(), Error> {
+    let original = vec![0.1, 0.2];
+    let file = write_avro(None, &original)?;
+    let read = read_avro(&file)?;
+    assert_eq!(read, original);
     Ok(())
 }
-```
+
+#[test]
+fn round_trip_deflate() -> Result<(), Error> {
+    let original = vec![0.1, 0.2];
+    let file = write_avro(Some(Compression::Deflate), &original)?;
+    let read = read_avro(&file)?;
+    assert_eq!(read, original);
+    Ok(())
+}
+
+#[test]
+fn round_trip_snappy() -> Result<(), Error> {
+    let original = vec![0.1, 0.2];
+    let file = write_avro(Some(Compression::Snappy), &original)?;
+    let read = read_avro(&file)?;
+    assert_eq!(read, original);
+    Ok(())
+}

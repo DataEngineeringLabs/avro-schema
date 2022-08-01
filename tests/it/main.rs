@@ -1,6 +1,8 @@
+mod file;
+
 use serde_json::Result;
 
-use avro_schema::*;
+use avro_schema::schema::{BytesLogical, Field, LongLogical, Schema};
 
 fn cases() -> Vec<(&'static str, Schema)> {
     use Schema::*;
@@ -33,7 +35,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
         (r#"{"type": "double"}"#, Double),
         (
             r#"{"type": "enum", "name": "Test", "symbols": ["A", "B"]}"#,
-            Enum(avro_schema::Enum::new(
+            Enum(avro_schema::schema::Enum::new(
                 "Test",
                 vec!["A".to_string(), "B".to_string()],
             )),
@@ -52,7 +54,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
                 "type": "map",
                 "values": {"type": "enum", "name": "Test", "symbols": ["A", "B"]}
             }"#,
-            Map(Box::new(Enum(avro_schema::Enum::new(
+            Map(Box::new(Enum(avro_schema::schema::Enum::new(
                 "Test",
                 vec!["A".to_string(), "B".to_string()],
             )))),
@@ -67,7 +69,8 @@ fn cases() -> Vec<(&'static str, Schema)> {
                     "items": {"type": "enum", "name": "Test", "symbols": ["A", "B"]}
                 }"#,
             Array(Box::new(
-                avro_schema::Enum::new("Test", vec!["A".to_string(), "B".to_string()]).into(),
+                avro_schema::schema::Enum::new("Test", vec!["A".to_string(), "B".to_string()])
+                    .into(),
             )),
         ),
         (
@@ -104,7 +107,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
                     }
                 ]
             }"#,
-            Record(avro_schema::Record {
+            Record(avro_schema::schema::Record {
                 name: "HandshakeResponse".to_string(),
                 namespace: Some("org.apache.avro.ipc".to_string()),
                 doc: None,
@@ -112,7 +115,7 @@ fn cases() -> Vec<(&'static str, Schema)> {
                 fields: vec![
                     Field::new(
                         "match",
-                        avro_schema::Enum::new(
+                        avro_schema::schema::Enum::new(
                             "HandshakeMatch",
                             vec!["BOTH".to_string(), "CLIENT".to_string(), "NONE".to_string()],
                         )
@@ -121,18 +124,21 @@ fn cases() -> Vec<(&'static str, Schema)> {
                     Field::new("serverProtocol", Union(vec![Null, String(None)])),
                     Field::new(
                         "serverHash",
-                        Union(vec![Null, avro_schema::Fixed::new("MD5", 16).into()]),
+                        Union(vec![
+                            Null,
+                            avro_schema::schema::Fixed::new("MD5", 16).into(),
+                        ]),
                     ),
                     Field::new("meta", Union(vec![Null, Map(Box::new(Bytes(None)))])),
                     Field::new(
                         "duration",
-                        avro_schema::Fixed {
+                        avro_schema::schema::Fixed {
                             name: "duration".to_string(),
                             size: 12,
                             namespace: None,
                             doc: None,
                             aliases: vec![],
-                            logical: Some(FixedLogical::Duration),
+                            logical: Some(avro_schema::schema::FixedLogical::Duration),
                         }
                         .into(),
                     ),
@@ -145,18 +151,8 @@ fn cases() -> Vec<(&'static str, Schema)> {
 #[test]
 fn test_deserialize() -> Result<()> {
     for (data, expected) in cases() {
-        let v: avro_schema::Schema = serde_json::from_str(data)?;
+        let v: avro_schema::schema::Schema = serde_json::from_str(data)?;
         assert_eq!(v, expected);
-    }
-    Ok(())
-}
-
-#[test]
-fn test_round_trip() -> Result<()> {
-    for (_, expected) in cases() {
-        let serialized = serde_json::to_string(&expected)?;
-        let v: avro_schema::Schema = serde_json::from_str(&serialized)?;
-        assert_eq!(expected, v);
     }
     Ok(())
 }

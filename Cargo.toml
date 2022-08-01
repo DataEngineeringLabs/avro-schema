@@ -2,7 +2,7 @@
 name = "avro-schema"
 version = "0.2.2"
 license = "Apache-2.0"
-description = "Implementation of Apache Avro spec"
+description = "Apache Avro specification"
 homepage = "https://github.com/DataEngineeringLabs/avro-schema"
 repository = "https://github.com/DataEngineeringLabs/avro-schema"
 authors = ["Jorge C. Leitao <jorgecarleitao@gmail.com>"]
@@ -12,3 +12,23 @@ edition = "2018"
 [dependencies]
 serde_json = { version = "1.0", default-features = false, features = ["std"] }
 serde = { version = "1.0", default-features = false }
+
+fallible-streaming-iterator = { version = "0.1" }
+
+libflate = { version = "1.1.1", optional = true }
+snap = { version = "1", optional = true }
+crc = { version = "2", optional = true }
+
+# for async
+futures = { version = "0.3", optional = true }
+async-stream = { version = "0.3.2", optional = true }
+
+[features]
+default = []
+full = ["compression", "async"]
+compression = [
+    "libflate",
+    "snap",
+    "crc",
+]
+async = ["futures", "async-stream"]
