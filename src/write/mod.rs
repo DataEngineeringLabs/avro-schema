@@ -1,3 +1,4 @@
+//! Functions to compress and write Files' metadata and blocks
 mod compression;
 pub use compression::compress;
 mod block;

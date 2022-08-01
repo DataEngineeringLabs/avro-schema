@@ -1,3 +1,5 @@
+mod file;
+
 use serde_json::Result;
 
 use avro_schema::schema::{BytesLogical, Field, LongLogical, Schema};
@@ -151,16 +153,6 @@ fn test_deserialize() -> Result<()> {
     for (data, expected) in cases() {
         let v: avro_schema::schema::Schema = serde_json::from_str(data)?;
         assert_eq!(v, expected);
-    }
-    Ok(())
-}
-
-#[test]
-fn test_round_trip() -> Result<()> {
-    for (_, expected) in cases() {
-        let serialized = serde_json::to_string(&expected)?;
-        let v: avro_schema::schema::Schema = serde_json::from_str(&serialized)?;
-        assert_eq!(expected, v);
     }
     Ok(())
 }

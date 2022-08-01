@@ -1,3 +1,4 @@
+//! Functions to asynchronously write Files' metadata and blocks
 use futures::{AsyncWrite, AsyncWriteExt};
 
 use crate::{

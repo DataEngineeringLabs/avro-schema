@@ -25,6 +25,7 @@ async-stream = { version = "0.3.2", optional = true }
 
 [features]
 default = []
+full = ["compression", "async"]
 compression = [
     "libflate",
     "snap",

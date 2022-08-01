@@ -1,5 +1,9 @@
+//! Contains [`Error`]
+
+/// Error from this crate
 #[derive(Debug, Clone, Copy)]
 pub enum Error {
+    /// Generic error when the file is out of spec
     OutOfSpec,
     /// When reading or writing with compression but the feature flag "compression" is not active.
     RequiresCompression,

@@ -1,5 +1,7 @@
+//! Functions used to encode Avro physical types
 use crate::error::Error;
 
+/// Zigzag encoding of a signed integer.
 #[inline]
 pub fn zigzag_encode<W: std::io::Write>(n: i64, writer: &mut W) -> Result<(), Error> {
     _zigzag_encode(((n << 1) ^ (n >> 63)) as u64, writer)

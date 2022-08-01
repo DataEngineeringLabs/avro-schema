@@ -1,5 +1,6 @@
 #![doc = include_str!("lib.md")]
 #![forbid(unsafe_code)]
+#![forbid(missing_docs)]
 
 pub mod error;
 pub mod file;

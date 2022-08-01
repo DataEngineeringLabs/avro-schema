@@ -1,10 +1,14 @@
+//! Contains structs found in Avro files
 use crate::schema::Record;
 
 /// Avro file's Metadata
 #[derive(Debug, Clone, PartialEq, Hash)]
 pub struct FileMetadata {
+    /// The Record represented in the file's Schema
     pub record: Record,
+    /// The files' compression
     pub compression: Option<Compression>,
+    /// The files' marker, present in every block
     pub marker: [u8; 16],
 }
 

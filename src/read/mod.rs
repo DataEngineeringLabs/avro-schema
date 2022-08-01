@@ -1,3 +1,4 @@
+//! Functions to read and decompress Files' metadata and blocks
 mod block;
 mod decode;
 pub(crate) mod decompress;
