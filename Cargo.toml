@@ -1,6 +1,6 @@
 [package]
 name = "avro-schema"
-version = "0.2.2"
+version = "0.3.0"
 license = "MIT/Apache-2.0"
 description = "Apache Avro specification"
 homepage = "https://github.com/DataEngineeringLabs/avro-schema"
